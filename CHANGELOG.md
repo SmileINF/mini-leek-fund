@@ -1,0 +1,28 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [1.0.0] - 2026-09-11
+
+### Added
+
+- 侧边栏自选股视图，支持添加/删除股票
+- 底部状态栏实时显示股票行情
+- 支持股票代码和中文名称搜索
+- MA5/MA10 均线数据，鼠标悬浮查看
+- Blame 伪装功能，在代码行上方显示股票信息
+- 右键菜单管理状态栏股票
+- 点击状态栏股票快速切换
+- 红涨绿跌配色方案（侧边栏）
+- 白色涨灰色跌配色方案（状态栏）
+- 交易时间自动刷新，非交易时间暂停
+
+### Initial Release
+
+- A股实时行情
+- 自选股管理
+- 状态栏快捷操作
+- Blame 伪装模式

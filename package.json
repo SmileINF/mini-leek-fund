@@ -1,0 +1,182 @@
+{
+  "name": "mini-leek-fund",
+  "displayName": "Mini Leek Fund",
+  "description": "A股自选股和状态栏实时行情",
+  "version": "1.0.0",
+  "publisher": "your-publisher-name",
+  "engines": {
+    "vscode": "^1.59.0"
+  },
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "miniLeekFund",
+          "title": "Mini Leek Fund",
+          "icon": "resources/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "miniLeekFund": [
+        {
+          "id": "miniLeekFund.stocks",
+          "name": "自选股"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "miniLeekFund.addStock",
+        "title": "添加自选股",
+        "icon": "$(add)"
+      },
+      {
+        "command": "miniLeekFund.removeStock",
+        "title": "删除自选股"
+      },
+      {
+        "command": "miniLeekFund.refreshStocks",
+        "title": "刷新数据",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "miniLeekFund.addToStatusBar",
+        "title": "添加到状态栏"
+      },
+      {
+        "command": "miniLeekFund.removeFromStatusBar",
+        "title": "从状态栏移除"
+      },
+      {
+        "command": "miniLeekFund.blameCycle",
+        "title": "Blame 伪装：轮播股票",
+        "icon": "$(sync)"
+      },
+      {
+        "command": "miniLeekFund.toggleBlameLens",
+        "title": "Blame 伪装：开启/关闭",
+        "icon": "$(eye)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "miniLeekFund.addStock",
+          "when": "view == miniLeekFund.stocks",
+          "group": "navigation"
+        },
+        {
+          "command": "miniLeekFund.refreshStocks",
+          "when": "view == miniLeekFund.stocks",
+          "group": "navigation"
+        },
+        {
+          "command": "miniLeekFund.toggleBlameLens",
+          "when": "view == miniLeekFund.stocks",
+          "group": "navigation"
+        },
+        {
+          "command": "miniLeekFund.blameCycle",
+          "when": "view == miniLeekFund.stocks",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "miniLeekFund.removeStock",
+          "when": "view == miniLeekFund.stocks",
+          "group": "inline"
+        },
+        {
+          "command": "miniLeekFund.addToStatusBar",
+          "when": "view == miniLeekFund.stocks",
+          "group": "1_statusbar@1"
+        },
+        {
+          "command": "miniLeekFund.removeFromStatusBar",
+          "when": "view == miniLeekFund.stocks",
+          "group": "1_statusbar@2"
+        },
+        {
+          "command": "miniLeekFund.removeStock",
+          "when": "view == miniLeekFund.stocks",
+          "group": "2_manage@1"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Mini Leek Fund",
+      "properties": {
+        "miniLeekFund.stocks": {
+          "type": "array",
+          "default": [
+            "sh000001",
+            "sz399001",
+            "sz399006"
+          ],
+          "description": "自选股代码列表"
+        },
+        "miniLeekFund.statusBarStocks": {
+          "type": "array",
+          "default": [
+            "sh000001"
+          ],
+          "description": "状态栏显示的股票的代码"
+        },
+        "miniLeekFund.interval": {
+          "type": "number",
+          "default": 5000,
+          "description": "轮询间隔（毫秒）"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run esbuild",
+    "compile": "node esbuild.js",
+    "watch": "tsc -watch -p ./  # 仅用于开发时类型检查",
+    "esbuild": "node esbuild.js"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "@types/vscode": "^1.59.0",
+    "esbuild": "^0.28.2",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "axios": "^1.20.0",
+    "iconv-lite": "^0.6.2"
+  },
+  "icon": "resources/logo.png",
+  "galleryBanner": {
+    "color": "#0f172a",
+    "theme": "dark"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "A股",
+    "stock",
+    "基金",
+    "fund",
+    "leek",
+    "韭菜",
+    "实时行情",
+    "状态栏",
+    "blame",
+    "codelens",
+    "vscode"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-name/mini-leek-fund"
+  },
+  "license": "MIT",
+  "readme": "README.md"
+}

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+  <!-- 3个上涨K线柱，从左到右依次升高，空心，粗边框 -->
+  <rect x="2" y="16" width="4.5" height="6" rx="0.5" fill="none" stroke="#ef4444" stroke-width="2"/>
+  <rect x="10" y="10" width="4.5" height="12" rx="0.5" fill="none" stroke="#ef4444" stroke-width="2"/>
+  <rect x="18" y="4" width="4.5" height="18" rx="0.5" fill="none" stroke="#ef4444" stroke-width="2"/>
+</svg>
