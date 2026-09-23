@@ -41,9 +41,13 @@ export function activate(context: vscode.ExtensionContext) {
     }
 
     if (funds.length > 0) {
-      const fundData = await fundService.fetchFunds(funds);
-      if (fundData.length > 0) {
-        fundProvider.setData(fundData);
+      try {
+        const fundData = await fundService.fetchFunds(funds);
+        if (fundData.length > 0) {
+          fundProvider.setData(fundData);
+        }
+      } catch (error) {
+        console.error('刷新基金失败:', (error as Error).message);
       }
     }
   };
