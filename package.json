@@ -26,6 +26,10 @@
         {
           "id": "miniLeekFund.stocks",
           "name": "自选股"
+        },
+        {
+          "id": "miniLeekFund.funds",
+          "name": "基金"
         }
       ]
     },
@@ -61,6 +65,15 @@
         "command": "miniLeekFund.toggleBlameLens",
         "title": "Blame 伪装：开启/关闭",
         "icon": "$(eye)"
+      },
+      {
+        "command": "miniLeekFund.addFund",
+        "title": "添加基金",
+        "icon": "$(add)"
+      },
+      {
+        "command": "miniLeekFund.removeFund",
+        "title": "删除基金"
       }
     ],
     "menus": {
@@ -84,6 +97,11 @@
           "command": "miniLeekFund.blameCycle",
           "when": "view == miniLeekFund.stocks",
           "group": "navigation"
+        },
+        {
+          "command": "miniLeekFund.addFund",
+          "when": "view == miniLeekFund.funds",
+          "group": "navigation"
         }
       ],
       "view/item/context": [
@@ -106,6 +124,11 @@
           "command": "miniLeekFund.removeStock",
           "when": "view == miniLeekFund.stocks",
           "group": "2_manage@1"
+        },
+        {
+          "command": "miniLeekFund.removeFund",
+          "when": "view == miniLeekFund.funds",
+          "group": "inline"
         }
       ]
     },
@@ -132,6 +155,14 @@
           "type": "number",
           "default": 5000,
           "description": "轮询间隔（毫秒）"
+        },
+        "miniLeekFund.funds": {
+          "type": "array",
+          "default": [
+            "161725",
+            "110022"
+          ],
+          "description": "自选基金代码列表"
         }
       }
     }

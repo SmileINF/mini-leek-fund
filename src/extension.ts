@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
 import { StockService, StockInfo } from './stockService';
 import { StockProvider, StockItem } from './stockProvider';
+import { FundService, FundInfo, searchFund } from './fundService';
+import { FundProvider, FundItem } from './fundProvider';
 import { StatusBar } from './statusBar';
 import { BlameLensProvider } from './blameLens';
 import { fetchStockSuggest } from './suggestService';
@@ -10,25 +12,39 @@ let timer: NodeJS.Timeout | undefined;
 export function activate(context: vscode.ExtensionContext) {
   const stockService = new StockService(context);
   const stockProvider = new StockProvider();
+  const fundService = new FundService(context);
+  const fundProvider = new FundProvider();
   const statusBar = new StatusBar();
   const blameLens = new BlameLensProvider(context);
 
   const treeView = vscode.window.createTreeView('miniLeekFund.stocks', {
     treeDataProvider: stockProvider
   });
-  context.subscriptions.push(treeView);
+  const fundTreeView = vscode.window.createTreeView('miniLeekFund.funds', {
+    treeDataProvider: fundProvider
+  });
+  context.subscriptions.push(treeView, fundTreeView);
 
   const doRefresh = async () => {
     const config = vscode.workspace.getConfiguration('miniLeekFund');
     const stocks: string[] = config.get('stocks') || [];
-    if (stocks.length === 0) { return; }
+    const funds: string[] = config.get('funds') || [];
 
-    const data = await stockService.fetchStocks(stocks);
-    if (data.length > 0) {
-      stockProvider.setData(data);
-      statusBar.update(data);
-      blameLens.setStocks(data);
-      stockProvider.loadMAIndicators().catch(() => {});
+    if (stocks.length > 0) {
+      const data = await stockService.fetchStocks(stocks);
+      if (data.length > 0) {
+        stockProvider.setData(data);
+        statusBar.update(data);
+        blameLens.setStocks(data);
+        stockProvider.loadMAIndicators().catch(() => {});
+      }
+    }
+
+    if (funds.length > 0) {
+      const fundData = await fundService.fetchFunds(funds);
+      if (fundData.length > 0) {
+        fundProvider.setData(fundData);
+      }
     }
   };
 
@@ -47,7 +63,6 @@ export function activate(context: vscode.ExtensionContext) {
       qp.placeholder = '输入股票代码或名称（如：600519、茅台）';
       qp.items = [{ label: '请输入关键词搜索...', description: '' }];
 
-      let selectedCode: string | undefined;
       let timer: NodeJS.Timeout | null = null;
 
       qp.onDidChangeValue((value) => {
@@ -76,7 +91,6 @@ export function activate(context: vscode.ExtensionContext) {
         const selected = qp.selectedItems[0];
         if (!selected) { return; }
 
-        // 从 label 中提取代码（格式：名称  代码）
         const parts = selected.label.split('  ');
         if (parts.length >= 2) {
           const code = parts[parts.length - 1].trim();
@@ -98,6 +112,75 @@ export function activate(context: vscode.ExtensionContext) {
 
       qp.show();
       qp.onDidHide(() => { qp.dispose(); });
+    }),
+
+    vscode.commands.registerCommand('miniLeekFund.addFund', async () => {
+      const qp = vscode.window.createQuickPick();
+      qp.placeholder = '输入基金代码或名称（如：000011、白酒）';
+      qp.items = [{ label: '请输入关键词搜索...', description: '' }];
+
+      let timer: NodeJS.Timeout | null = null;
+
+      qp.onDidChangeValue((value) => {
+        qp.busy = true;
+        if (timer) { clearTimeout(timer); timer = null; }
+        timer = setTimeout(async () => {
+          const results = await searchFund(value);
+          const config = vscode.workspace.getConfiguration('miniLeekFund');
+          const funds: string[] = config.get('funds') || [];
+
+          if (results.length === 0) {
+            qp.items = value ? 
+              [{ label: '未找到匹配结果', description: '尝试输入完整的基金代码' }] :
+              [{ label: '请输入关键词搜索...', description: '' }];
+          } else {
+            qp.items = results.map(r => ({
+              label: r.label,
+              description: funds.includes(r.code) ? '已添加' : ''
+            }));
+          }
+          qp.busy = false;
+        }, 300);
+      });
+
+      qp.onDidAccept(() => {
+        const selected = qp.selectedItems[0];
+        if (!selected) { return; }
+
+        const parts = selected.label.split('  ');
+        if (parts.length >= 2) {
+          const code = parts[parts.length - 1].trim();
+          const config = vscode.workspace.getConfiguration('miniLeekFund');
+          const funds: string[] = config.get('funds') || [];
+
+          if (funds.includes(code)) {
+            vscode.window.showWarningMessage('已添加该基金');
+          } else {
+            funds.push(code);
+            config.update('funds', funds, vscode.ConfigurationTarget.Global).then(() => {
+              vscode.window.showInformationMessage(`已添加: ${selected.label}`);
+              doRefresh();
+            });
+          }
+        }
+        qp.hide();
+      });
+
+      qp.show();
+      qp.onDidHide(() => { qp.dispose(); });
+    }),
+
+    vscode.commands.registerCommand('miniLeekFund.removeFund', async (item: FundItem) => {
+      if (!item?.fund?.code) { return; }
+      const code = item.fund.code;
+      const config = vscode.workspace.getConfiguration('miniLeekFund');
+      const funds: string[] = config.get('funds') || [];
+      const idx = funds.indexOf(code);
+      if (idx !== -1) {
+        funds.splice(idx, 1);
+        await config.update('funds', funds, vscode.ConfigurationTarget.Global);
+        await doRefresh();
+      }
     }),
 
     vscode.commands.registerCommand('miniLeekFund.removeStock', async (item: StockItem) => {
