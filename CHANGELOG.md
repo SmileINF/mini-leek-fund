@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2026-09-24
+
+### Added
+
+- 侧边栏新增「基金」视图，支持添加/删除基金、中文名称搜索
+- 基金行情使用东方财富接口，展示估算净值与涨跌幅
+
+### Fixed
+
+- 修复非交易时段新增股票不显示的问题（改为 60 秒刷新一次）
+- 修复新浪行情响应无结尾换行时股票解析失败的问题
+- 基金接口异常不再影响股票状态栏刷新
+
 ## [1.0.0] - 2026-09-11
 
 ### Added
