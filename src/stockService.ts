@@ -64,11 +64,10 @@ export class StockService {
         return [];
       }
 
-      const lines = data.split('";\n');
+      const lines = data.split(/\r?\n/).filter(l => l.includes('hq_str_'));
       const stocks: StockInfo[] = [];
 
-      for (let i = 0; i < lines.length - 1; i++) {
-        const line = lines[i];
+      for (const line of lines) {
         const codeMatch = line.split('="');
         if (codeMatch.length < 2) continue;
 
