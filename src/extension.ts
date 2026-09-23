@@ -49,12 +49,17 @@ export function activate(context: vscode.ExtensionContext) {
   };
 
   const startLoop = () => {
-    if (timer) { clearInterval(timer); }
+    if (timer) { clearTimeout(timer); }
     const interval: number = vscode.workspace.getConfiguration('miniLeekFund').get('interval') || 5000;
-    doRefresh();
-    timer = setInterval(() => {
-      if (stockService.isTradingTime()) { doRefresh(); }
-    }, interval);
+
+    const schedule = () => {
+      const isTrading = stockService.isTradingTime();
+      // 交易时间按配置间隔刷新，非交易时间 60 秒刷新一次，保证新增股票能显示
+      const delay = isTrading ? interval : 60 * 1000;
+      doRefresh();
+      timer = setTimeout(schedule, delay);
+    };
+    schedule();
   };
 
   context.subscriptions.push(
@@ -297,7 +302,7 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   context.subscriptions.push({
-    dispose: () => { if (timer) { clearInterval(timer); } statusBar.dispose(); }
+    dispose: () => { if (timer) { clearTimeout(timer); } statusBar.dispose(); }
   });
 
   startLoop();
