@@ -6,6 +6,7 @@ import { FundProvider, FundItem } from './fundProvider';
 import { StatusBar } from './statusBar';
 import { BlameLensProvider } from './blameLens';
 import { fetchStockSuggest } from './suggestService';
+import { normalizeStockCode } from './stockService';
 
 let timer: NodeJS.Timeout | undefined;
 
@@ -25,6 +26,10 @@ export function activate(context: vscode.ExtensionContext) {
   });
   context.subscriptions.push(treeView, fundTreeView);
 
+  const output = vscode.window.createOutputChannel('Mini Leek Fund');
+  context.subscriptions.push(output);
+  let lastErrorShown = '';
+
   const doRefresh = async () => {
     const config = vscode.workspace.getConfiguration('miniLeekFund');
     const stocks: string[] = config.get('stocks') || [];
@@ -32,22 +37,31 @@ export function activate(context: vscode.ExtensionContext) {
 
     if (stocks.length > 0) {
       const data = await stockService.fetchStocks(stocks);
+      // 无论是否拿到数据都更新视图，空数据时让视图显示空态而不是卡在旧数据
+      stockProvider.setData(data);
+      statusBar.update(data);
+      blameLens.setStocks(data);
       if (data.length > 0) {
-        stockProvider.setData(data);
-        statusBar.update(data);
-        blameLens.setStocks(data);
         stockProvider.loadMAIndicators().catch(() => {});
+      }
+      const err = stockService.lastError;
+      if (err && err !== lastErrorShown) {
+        lastErrorShown = err;
+        output.appendLine(`[${new Date().toLocaleTimeString()}] ${err}`);
+        output.show(true);
+        vscode.window.showErrorMessage(`Mini Leek Fund: ${err}`);
       }
     }
 
     if (funds.length > 0) {
       try {
         const fundData = await fundService.fetchFunds(funds);
-        if (fundData.length > 0) {
-          fundProvider.setData(fundData);
+        fundProvider.setData(fundData);
+        if (fundService.lastError) {
+          output.appendLine(`[${new Date().toLocaleTimeString()}] ${fundService.lastError}`);
         }
       } catch (error) {
-        console.error('刷新基金失败:', (error as Error).message);
+        output.appendLine(`[${new Date().toLocaleTimeString()}] 刷新基金失败: ${(error as Error).message}`);
       }
     }
   };
@@ -106,10 +120,11 @@ export function activate(context: vscode.ExtensionContext) {
           const config = vscode.workspace.getConfiguration('miniLeekFund');
           const stocks: string[] = config.get('stocks') || [];
 
-          if (stocks.includes(code)) {
+          const norm = normalizeStockCode(code) || code;
+          if (stocks.some(c => normalizeStockCode(c) === norm)) {
             vscode.window.showWarningMessage('已在自选列表中');
           } else {
-            stocks.push(code);
+            stocks.push(norm);
             config.update('stocks', stocks, vscode.ConfigurationTarget.Global).then(() => {
               vscode.window.showInformationMessage(`已添加: ${selected.label}`);
               doRefresh();
@@ -162,10 +177,11 @@ export function activate(context: vscode.ExtensionContext) {
           const config = vscode.workspace.getConfiguration('miniLeekFund');
           const funds: string[] = config.get('funds') || [];
 
-          if (funds.includes(code)) {
+          const norm = code.trim();
+          if (funds.some(c => c.trim() === norm)) {
             vscode.window.showWarningMessage('已添加该基金');
           } else {
-            funds.push(code);
+            funds.push(norm);
             config.update('funds', funds, vscode.ConfigurationTarget.Global).then(() => {
               vscode.window.showInformationMessage(`已添加: ${selected.label}`);
               doRefresh();
@@ -269,7 +285,8 @@ export function activate(context: vscode.ExtensionContext) {
       });
 
       const watchList: string[] = config.get('stocks') || [];
-      for (const c of watchList) {
+      for (const raw of watchList) {
+        const c = normalizeStockCode(raw) || raw;
         const info = stockMap.get(c);
         const isCurrent = c === code;
         items.push({

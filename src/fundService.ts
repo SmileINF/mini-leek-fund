@@ -11,6 +11,10 @@ export interface FundInfo {
   time: string;       // 更新时间
 }
 
+export function normalizeFundCode(raw: string): string {
+  return (raw || '').trim();
+}
+
 function fetchText(url: string): Promise<string> {
   return new Promise((resolve, reject) => {
     const req = https.get(url, {
@@ -55,17 +59,22 @@ export async function searchFund(keyword: string): Promise<Array<{ code: string;
 
 export class FundService {
   public fundList: FundInfo[] = [];
+  public lastError: string = '';
 
   constructor(context: ExtensionContext) {}
 
   async fetchFunds(codes: string[]): Promise<FundInfo[]> {
     if (!codes || codes.length === 0) return [];
 
-    const url = `https://fundmobapi.eastmoney.com/FundMNewApi/FundMNFInfo?pageIndex=1&pageSize=50&plat=Android&appType=ttjj&product=EFund&Version=1&deviceid=1&Fcodes=${codes.join(',')}`;
+    const cleanCodes = codes.map(normalizeFundCode).filter(c => !!c);
+    if (cleanCodes.length === 0) return [];
+
+    const url = `https://fundmobapi.eastmoney.com/FundMNewApi/FundMNFInfo?pageIndex=1&pageSize=50&plat=Android&appType=ttjj&product=EFund&Version=1&deviceid=1&Fcodes=${cleanCodes.join(',')}`;
     try {
       const data = await fetchText(url);
       const json = JSON.parse(data);
       const funds: FundInfo[] = [];
+      const found = new Set<string>();
 
       for (const item of (json.Datas || [])) {
         const code = item.FCODE;
@@ -75,6 +84,9 @@ export class FundService {
         const gsz = item.GSZ;          // 今日估值（交易时段）
         const gszzl = item.GSZZL;      // 估算涨幅 %
         const gztime = item.GZTIME || item.PDATE; // 更新时间
+
+        if (!code) continue;
+        found.add(code);
 
         // 交易时段优先用估值，否则用最新净值
         const price = gsz && gsz !== '-' ? gsz : nav;
@@ -95,10 +107,13 @@ export class FundService {
         });
       }
 
+      const missing = cleanCodes.filter(c => !found.has(c));
+      this.lastError = missing.length > 0 ? `未找到基金: ${missing.join(', ')}` : '';
       this.fundList = funds;
       return funds;
     } catch (error) {
-      console.error('获取基金数据失败:', (error as Error).message);
+      this.lastError = `获取基金数据失败: ${(error as Error).message}`;
+      console.error(this.lastError);
       return [];
     }
   }
