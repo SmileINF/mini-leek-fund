@@ -2,7 +2,7 @@
   "name": "mini-leek-fund",
   "displayName": "Mini Leek Fund",
   "description": "A股自选股和状态栏实时行情",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "publisher": "smileinf",
   "engines": {
     "vscode": "^1.59.0"
