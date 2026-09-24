@@ -2,7 +2,7 @@
 
 📈 **A股自选股 VS Code 插件** - 在编辑器中实时监控股票行情
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://marketplace.visualstudio.com)
+[![Marketplace](https://img.shields.io/badge/VS%20Code-Marketplace-blue.svg)](https://marketplace.visualstudio.com/items?itemName=smileinf.mini-leek-fund)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 
@@ -28,7 +28,11 @@
 
 ### 从 Marketplace 安装
 
-搜索 "Mini Leek Fund"（待发布）
+1. 打开 VS Code 扩展面板（`Ctrl+Shift+X` / `Cmd+Shift+X`）
+2. 搜索 **Mini Leek Fund**
+3. 点击 **Install**
+
+或直接打开：<https://marketplace.visualstudio.com/items?itemName=smileinf.mini-leek-fund>
 
 ## 使用方法
 
