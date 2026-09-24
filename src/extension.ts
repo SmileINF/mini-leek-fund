@@ -18,22 +18,50 @@ export function activate(context: vscode.ExtensionContext) {
   const statusBar = new StatusBar();
   const blameLens = new BlameLensProvider(context);
 
-  const treeView = vscode.window.createTreeView('miniLeekFund.stocks', {
-    treeDataProvider: stockProvider
-  });
-  const fundTreeView = vscode.window.createTreeView('miniLeekFund.funds', {
-    treeDataProvider: fundProvider
-  });
-  context.subscriptions.push(treeView, fundTreeView);
-
   const output = vscode.window.createOutputChannel('Mini Leek Fund');
   context.subscriptions.push(output);
   let lastErrorShown = '';
+
+  // VS Code 升级扩展后，package.json 的贡献点可能还没生效，
+  // 此时 createTreeView 会抛 "No view is registered with id"。
+  // 单个视图创建失败不能中断 activate，否则命令全部注册不上。
+  const createdViews = new Set<string>();
+  const failedViews = new Set<string>();
+
+  const ensureView = (
+    viewId: string,
+    treeDataProvider: vscode.TreeDataProvider<any>
+  ): boolean => {
+    if (createdViews.has(viewId)) { return true; }
+    try {
+      const view = vscode.window.createTreeView(viewId, { treeDataProvider });
+      context.subscriptions.push(view);
+      createdViews.add(viewId);
+      failedViews.delete(viewId);
+      return true;
+    } catch (error) {
+      if (!failedViews.has(viewId)) {
+        failedViews.add(viewId);
+        output.appendLine(
+          `创建视图 ${viewId} 失败: ${(error as Error).message}，` +
+          '请执行「开发人员: 重新加载窗口」或重启 VS Code'
+        );
+      }
+      return false;
+    }
+  };
+
+  ensureView('miniLeekFund.stocks', stockProvider);
+  ensureView('miniLeekFund.funds', fundProvider);
 
   const doRefresh = async () => {
     const config = vscode.workspace.getConfiguration('miniLeekFund');
     const stocks: string[] = config.get('stocks') || [];
     const funds: string[] = config.get('funds') || [];
+
+    // 视图贡献点在扩展更新后可能延迟生效，每轮刷新补建一次
+    ensureView('miniLeekFund.stocks', stockProvider);
+    ensureView('miniLeekFund.funds', fundProvider);
 
     if (stocks.length > 0) {
       const data = await stockService.fetchStocks(stocks);

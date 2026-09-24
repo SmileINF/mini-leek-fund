@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.2] - 2026-09-24
 
+### Fixed
+
+- 修复扩展升级后报错 `No view is registered with id: miniLeekFund.funds`：
+  视图创建失败不再中断 `activate`，命令仍可正常注册，并在下一轮刷新时自动补建视图
+
 ### Changed
 
 - README 移除写死的 1.0.0 版本号徽章，改为 Marketplace 入口链接
